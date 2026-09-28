@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  aegis-backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: aegis-noc-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - AIRGAP_STRICT_ENFORCE=true
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - OLLAMA_MODEL=llama3.2
+    volumes:
+      - ./backend/data:/app/backend/data
+    networks:
+      - aegis-internal
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  aegis-frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: aegis-noc-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - aegis-backend
+    networks:
+      - aegis-internal
+    restart: unless-stopped
+
+networks:
+  aegis-internal:
+    driver: bridge
+    internal: false # Keep local container interconnectivity

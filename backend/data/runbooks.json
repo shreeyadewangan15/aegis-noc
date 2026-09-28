@@ -1,0 +1,72 @@
+[
+  {
+    "id": "RB-MPLS-001",
+    "title": "BGP Peer Flap on MPLS PE-CE Uplink",
+    "trigger_symptoms": ["BGP neighbor down", "route flap", "prefix drop", "eBGP_Underlay state non-Established"],
+    "root_cause_categories": ["Physical interface CRC errors", "Carrier Metro-E maintenance", "MTU mismatch", "Hold-time expiration"],
+    "triage_steps": [
+      "1. Check physical link status and optic light levels (DOM / transceiver optical rx/tx power).",
+      "2. Query PE VRF routing table for BGP session state transitions: 'show bgp vpnv4 unicast summary'.",
+      "3. Inspect interface buffer discards and interface input drops on CE uplink.",
+      "4. Verify whether SD-WAN Dynamic Multipoint IPSec overlay auto-rerouted to secondary PE uplink."
+    ],
+    "remediation_actions": [
+      "Trigger SD-WAN policy SLA override to favor alternative underlay path.",
+      "Engage SP Tier-3 NOC with Circuit ID reference.",
+      "Soft-clear BGP neighbor session with route-refresh if stuck in OpenSent."
+    ],
+    "blast_radius_impact": "High if primary DC link; Medium if redundant CE is active."
+  },
+  {
+    "id": "RB-IPSEC-002",
+    "title": "IPSec Tunnel Jitter and SLA Breach on SD-WAN Overlay",
+    "trigger_symptoms": ["Jitter > 15ms", "SLA violation", "VoIP MOS score degradation", "DSCP EF queue drop"],
+    "root_cause_categories": ["Underlay congestion at P-Core", "Crypto engine acceleration exhaustion", "Anti-replay window drop"],
+    "triage_steps": [
+      "1. Verify IPFIX top-talker flows on the degraded IPSec tunnel.",
+      "2. Inspect underlay carrier latency along path: CE -> PE -> P -> PE -> CE.",
+      "3. Inspect Crypto IPsec SA stats for crypto packet drops or re-key collision.",
+      "4. Compare jitter metrics between Primary Underlay (PE-01) vs Secondary Underlay (PE-02)."
+    ],
+    "remediation_actions": [
+      "Dynamic path steering: Shift latency-sensitive voice/video traffic (EF class) to secondary Hub tunnel.",
+      "Enable FEC (Forward Error Correction) and Packet Duplication on degraded tunnel.",
+      "Rate-limit bulk file transfers (Scavenger / Best Effort class) via QoS shaping."
+    ],
+    "blast_radius_impact": "Site-level user experience degradation for voice/video calls."
+  },
+  {
+    "id": "RB-BUFFER-003",
+    "title": "Interface Buffer Discards and Tail Drops on Core Backbone",
+    "trigger_symptoms": ["Buffer discards > 500 pps", "Packet loss > 1.5%", "Queue depth near 100%"],
+    "root_cause_categories": ["Microbursts from elephant flows", "QoS egress queue misconfiguration", "Trans-continental trunk congestion"],
+    "triage_steps": [
+      "1. Identify congested interface (e.g. HundredGigE or FourHundredGigE core trunks).",
+      "2. Collect IPFIX flow export at 1-second sample rate to detect single large UDP streams.",
+      "3. Review WRED (Weighted Random Early Detection) drops vs Tail drops."
+    ],
+    "remediation_actions": [
+      "Apply CoS Queue weight adjustment for low-latency queues.",
+      "Initiate MPLS Traffic Engineering (MPLS-TE) tunnel diversion to alternate P-Core router.",
+      "Apply policer on ingress CE rate-limiting non-critical backup replication."
+    ],
+    "blast_radius_impact": "Regional or Inter-Hub latency amplification affecting all overlay tunnels traversing the core."
+  },
+  {
+    "id": "RB-DCI-004",
+    "title": "Datacenter Interconnect (DCI) Heartbeat Asymmetry",
+    "trigger_symptoms": ["DCI heartbeat degradation", "Split-brain risk in DC Active-Active CEs", "HSRP/VRRP state change"],
+    "root_cause_categories": ["Inter-rack fiber transceiver failure", "VLAN trunking misconfiguration", "Spanning-tree topology change"],
+    "triage_steps": [
+      "1. Check TenGigabitEthernet0/1/0 cross-connect status on DC1-CE-01 and DC1-CE-02.",
+      "2. Verify BGP EVPN MAC/IP route synchronization between dual DC CEs.",
+      "3. Test bidirectional OAM ping over DCI link."
+    ],
+    "remediation_actions": [
+      "Force active state on DC1-CE-01 to prevent flapping split-brain.",
+      "Reroute DC inter-device sync via management out-of-band network.",
+      "Dispatch DC local on-call engineer to replace transceiver."
+    ],
+    "blast_radius_impact": "Critical: May trigger dual-active routing loop if not stabilized."
+  }
+]

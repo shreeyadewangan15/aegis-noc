@@ -1,0 +1,157 @@
+[
+  {
+    "id": "SOP-BGP-001",
+    "title": "Mitigating BGP Route Flap Damping & Hold-Timer Oscillations on PE-CE Uplinks",
+    "category": "BGP_ROUTING",
+    "severity_profile": "CRITICAL",
+    "target_roles": ["CE", "PE"],
+    "trigger_precursors": [
+      "BGP prefix churn rate > 25 updates/min",
+      "Hold-timer jitter variance > 4.5s",
+      "BGP session state flapping between Established and OpenSent/Active",
+      "Carrier Keepalive packet latency drift"
+    ],
+    "technical_root_causes": [
+      "Physical carrier Metro-E optical degradation causing intermittent frame drops",
+      "BGP hold-timer expiration due to high control-plane CPU queue starvation",
+      "MTU mismatch on sub-interface causing jumbo frame drops during route updates",
+      "Route flap damping penalty threshold exceeded on service provider PE"
+    ],
+    "preventive_remediation_steps": [
+      "1. Soft-reconfigure BGP neighbor session with dynamic route-refresh: 'neighbor <peer-ip> soft-reconfiguration inbound'.",
+      "2. Tune BGP hold-time timer to 90s and keepalive to 30s to prevent premature session drops during brief carrier packet drops.",
+      "3. Shift latency-critical overlay traffic to secondary redundant CE uplink via BGP Local Preference (set LP 200 on backup, 100 on primary).",
+      "4. Trigger automated SD-WAN Dynamic Multipoint IPSec SLA steering policy override to favor secondary Hub."
+    ],
+    "automation_script": "auto_bgp_timer_tune_and_reroute.py",
+    "lead_time_window": "120-240 seconds"
+  },
+  {
+    "id": "SOP-MPLS-TE-002",
+    "title": "MPLS Traffic Engineering (MPLS-TE) Auto-Route LSP Redirection for Core Trunk Saturation",
+    "category": "INTERFACE_SATURATION",
+    "severity_profile": "HIGH",
+    "target_roles": ["P", "PE"],
+    "trigger_precursors": [
+      "Interface utilization rising with positive linear regression drift (predicted >95% within 180s)",
+      "Buffer queue depth > 65% with increasing microburst frequency",
+      "WRED (Weighted Random Early Detection) early drop threshold engagement",
+      "Core trunk bandwidth consumption delta > 15 Gbps/min"
+    ],
+    "technical_root_causes": [
+      "Elephant flow backup synchronization initiated without QoS bandwidth shaping",
+      "Single transit trunk congestion due to unbalanced ECMP hash distribution",
+      "Trans-continental core fiber trunk capacity exhaustion during regional peak hours"
+    ],
+    "preventive_remediation_steps": [
+      "1. Calculate alternate explicit RSVP-TE LSP (Label Switched Path) via secondary P-Core router (P-CORE-02).",
+      "2. Re-optimize MPLS-TE Tunnel Auto-Route metric: 'tunnel mpls traffic-eng path-option 1 explicit TE-SECONDARY-PATH'.",
+      "3. Engage CoS Scavenger class (CS0) rate-policing on ingress CE to throttle non-critical elephant flows to 20% capacity.",
+      "4. Distribute IPFIX elephant flows across multi-chassis LAG bundle."
+    ],
+    "automation_script": "auto_mpls_te_lsp_redirect.py",
+    "lead_time_window": "150-300 seconds"
+  },
+  {
+    "id": "SOP-IPSEC-003",
+    "title": "IPSec Dead Peer Detection (DPD) & Dynamic Crypto SA Rekey Latency Remediation",
+    "category": "IPSEC_OVERLAY",
+    "severity_profile": "HIGH",
+    "target_roles": ["CE", "HUB"],
+    "trigger_precursors": [
+      "Progressive packet loss drift from 0.05% towards 2.5% on DMVPN tunnel",
+      "IKEv2 / IPsec Security Association (SA) re-key latency drift > 850ms",
+      "Anti-replay window sequence number drops detected",
+      "Crypto engine hardware crypto buffer saturation"
+    ],
+    "technical_root_causes": [
+      "Underlay MPLS path jitter causing IKEv2 DPD keepalive acknowledgment delays",
+      "Hardware crypto acceleration co-processor queue congestion",
+      "Re-key phase collision between Hub and multiple Branch CEs simultaneously",
+      "WAN MTU fragmentation of encrypted ESP packets"
+    ],
+    "preventive_remediation_steps": [
+      "1. Pre-emptively trigger graceful crypto SA rekey: 'clear crypto sa peer <hub-ip> soft'.",
+      "2. Enable Path MTU Discovery (PMTUD) and set TCP MSS adjust to 1360 on overlay tunnel interfaces: 'ip tcp adjust-mss 1360'.",
+      "3. Activate Forward Error Correction (FEC) and Adaptive Packet Duplication on overlay tunnel for voice (EF) packets.",
+      "4. Adjust DPD keepalive interval to 10s with 3 retries."
+    ],
+    "automation_script": "auto_ipsec_crypto_tune.py",
+    "lead_time_window": "90-180 seconds"
+  },
+  {
+    "id": "SOP-BUFFER-004",
+    "title": "Interface Queue Buffer Exhaustion & WRED Random Drop Tuning",
+    "category": "QUEUE_BUFFER",
+    "severity_profile": "CRITICAL",
+    "target_roles": ["P", "PE", "CE"],
+    "trigger_precursors": [
+      "Buffer discards rate accelerating (>150 drops/sec)",
+      "High-priority VoIP EF queue depth > 45%",
+      "Memory allocation pool exhaustion for packet buffers on linecard",
+      "Burst duration exceeding hardware packet-memory limit"
+    ],
+    "technical_root_causes": [
+      "Microburst collision from synchronized application backup bursts",
+      "Misconfigured QoS queue scheduling weights (strict priority starvation)",
+      "Egress port speed mismatch (100G ingress feeding 10G egress interface)"
+    ],
+    "preventive_remediation_steps": [
+      "1. Dynamic QoS Buffer Expansion: Adjust hardware queue-limit multiplier by +50% for burst absorption.",
+      "2. Apply ECN (Explicit Congestion Notification) marking to initiate TCP window reduction at endpoints.",
+      "3. Prioritize Low Latency Queueing (LLQ) bandwidth allocation for VoIP and Video streams.",
+      "4. Divert bulk replication traffic to off-peak staging queue."
+    ],
+    "automation_script": "auto_qos_queue_expansion.py",
+    "lead_time_window": "60-150 seconds"
+  },
+  {
+    "id": "SOP-SDWAN-005",
+    "title": "SD-WAN Application-Aware SLA Steering for Real-Time VoIP/Video Jitter Drift",
+    "category": "SLA_STEERING",
+    "severity_profile": "MEDIUM",
+    "target_roles": ["BRANCH", "HUB"],
+    "trigger_precursors": [
+      "Voice MOS score degradation projection (< 3.8 estimated in 120s)",
+      "Overlay jitter drifting past 8.0ms threshold",
+      "Underlay carrier packet latency increasing monotonically (+2ms/min)"
+    ],
+    "technical_root_causes": [
+      "Carrier regional peering exchange point congestion",
+      "Asymmetric routing between forward and reverse transit paths",
+      "Underlay Metro-E radio link degradation in inclement weather"
+    ],
+    "preventive_remediation_steps": [
+      "1. Trigger Application-Aware Routing (AAR) SLA policy shift to alternate secondary Hub overlay tunnel.",
+      "2. Enable per-packet load sharing across redundant IPSec tunnels with active re-ordering buffer.",
+      "3. Alert Voice Engineering team with automated telemetry diagnostic bundle."
+    ],
+    "automation_script": "auto_sdwan_aar_steer.py",
+    "lead_time_window": "120-300 seconds"
+  },
+  {
+    "id": "SOP-DCI-006",
+    "title": "Datacenter Interconnect (DCI) Heartbeat Asymmetry & Dual-Active Split-Brain Prevention",
+    "category": "DATACENTER_CORE",
+    "severity_profile": "CRITICAL",
+    "target_roles": ["DC_CE"],
+    "trigger_precursors": [
+      "DCI cross-connect heartbeat latency variance > 1.5ms",
+      "BGP EVPN MAC/IP route synchronization delta > 250 routes",
+      "Optical transceiver Rx power degradation on 10G DCI interface"
+    ],
+    "technical_root_causes": [
+      "Intra-datacenter fiber patch cable micro-bend or transceiver optical loss",
+      "Control plane CPU spike on secondary DC CE delaying keepalive exchange",
+      "Spanning-tree BPDU filter misconfiguration causing temporary port blocking"
+    ],
+    "preventive_remediation_steps": [
+      "1. Lock Active state on DC1-CE-01 to prevent flapping election cycles.",
+      "2. Route DCI sync heartbeat over secondary out-of-band MPLS VRF transit path.",
+      "3. Suppress BGP EVPN route-withdrawn timers by +30s to allow convergence.",
+      "4. Dispatch on-site DC technician with optical power meter to inspect TenGigabitEthernet0/1/0."
+    ],
+    "automation_script": "auto_dci_split_brain_guard.py",
+    "lead_time_window": "180-360 seconds"
+  }
+]

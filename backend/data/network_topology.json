@@ -1,0 +1,701 @@
+{
+  "network_id": "NET-ENTERPRISE-GLOBAL-01",
+  "name": "Global Enterprise SD-WAN over MPLS Backbone",
+  "version": "2.4.0",
+  "airgap_status": "STRICT_ENFORCED",
+  "sites": [
+    {
+      "id": "SITE-DC-ASHBURN",
+      "name": "Ashburn Primary Datacenter",
+      "type": "DATACENTER",
+      "geo": { "lat": 39.0438, "lng": -77.4874, "city": "Ashburn, VA", "country": "USA" },
+      "tier": "Core",
+      "redundancy": "N+1 Active-Active",
+      "nodes": ["DC1-CE-01", "DC1-CE-02"]
+    },
+    {
+      "id": "SITE-HUB-EAST",
+      "name": "Regional Hub East (Atlanta)",
+      "type": "HUB",
+      "geo": { "lat": 33.7490, "lng": -84.3880, "city": "Atlanta, GA", "country": "USA" },
+      "tier": "Aggregation",
+      "redundancy": "Active-Standby",
+      "nodes": ["HUB-EAST-CE-01"]
+    },
+    {
+      "id": "SITE-HUB-WEST",
+      "name": "Regional Hub West (Denver)",
+      "type": "HUB",
+      "geo": { "lat": 39.7392, "lng": -104.9903, "city": "Denver, CO", "country": "USA" },
+      "tier": "Aggregation",
+      "redundancy": "Active-Standby",
+      "nodes": ["HUB-WEST-CE-01"]
+    },
+    {
+      "id": "SITE-BR-NYC",
+      "name": "New York Financial Branch",
+      "type": "BRANCH",
+      "geo": { "lat": 40.7128, "lng": -74.0060, "city": "New York, NY", "country": "USA" },
+      "tier": "Access",
+      "criticality": "HIGH",
+      "nodes": ["BR-NYC-CE-01"]
+    },
+    {
+      "id": "SITE-BR-CHI",
+      "name": "Chicago Logistics Branch",
+      "type": "BRANCH",
+      "geo": { "lat": 41.8781, "lng": -87.6298, "city": "Chicago, IL", "country": "USA" },
+      "tier": "Access",
+      "criticality": "MEDIUM",
+      "nodes": ["BR-CHI-CE-01"]
+    },
+    {
+      "id": "SITE-BR-SFO",
+      "name": "San Francisco Tech Branch",
+      "type": "BRANCH",
+      "geo": { "lat": 37.7749, "lng": -122.4194, "city": "San Francisco, CA", "country": "USA" },
+      "tier": "Access",
+      "criticality": "HIGH",
+      "nodes": ["BR-SFO-CE-01"]
+    },
+    {
+      "id": "SITE-BR-MIA",
+      "name": "Miami Operations Branch",
+      "type": "BRANCH",
+      "geo": { "lat": 25.7617, "lng": -80.1918, "city": "Miami, FL", "country": "USA" },
+      "tier": "Access",
+      "criticality": "MEDIUM",
+      "nodes": ["BR-MIA-CE-01"]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "DC1-CE-01",
+      "hostname": "dc1-ce-01.corp.internal",
+      "role": "CE",
+      "site_id": "SITE-DC-ASHBURN",
+      "loopback_ip": "10.255.0.1/32",
+      "system_asn": 65001,
+      "device_model": "Cisco Catalyst 8500-12X",
+      "os_version": "IOS-XE 17.9.4a (AirGapped)",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/0", "ip": "172.16.1.1/30", "speed_gbps": 10, "connected_to": "PE-01:GigabitEthernet0/0/1", "role": "MPLS_UPLINK" },
+        { "name": "GigabitEthernet0/0/1", "ip": "172.16.1.5/30", "speed_gbps": 10, "connected_to": "PE-02:GigabitEthernet0/0/1", "role": "MPLS_UPLINK_SECONDARY" },
+        { "name": "TenGigabitEthernet0/1/0", "ip": "10.255.10.1/30", "speed_gbps": 10, "connected_to": "DC1-CE-02:TenGigabitEthernet0/1/0", "role": "DCI_HEARTBEAT" },
+        { "name": "Tunnel100", "ip": "10.100.1.1/24", "speed_gbps": 5, "connected_to": "HUB-EAST-CE-01:Tunnel100", "role": "IPSEC_OVERLAY" },
+        { "name": "Tunnel200", "ip": "10.200.1.1/24", "speed_gbps": 5, "connected_to": "HUB-WEST-CE-01:Tunnel200", "role": "IPSEC_OVERLAY" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "PE-01", "peer_ip": "172.16.1.2", "remote_asn": 64512, "type": "eBGP_Underlay" },
+        { "peer_id": "HUB-EAST-CE-01", "peer_ip": "10.100.1.2", "remote_asn": 65002, "type": "eBGP_Overlay_EVPN" },
+        { "peer_id": "HUB-WEST-CE-01", "peer_ip": "10.200.1.2", "remote_asn": 65003, "type": "eBGP_Overlay_EVPN" }
+      ]
+    },
+    {
+      "id": "DC1-CE-02",
+      "hostname": "dc1-ce-02.corp.internal",
+      "role": "CE",
+      "site_id": "SITE-DC-ASHBURN",
+      "loopback_ip": "10.255.0.2/32",
+      "system_asn": 65001,
+      "device_model": "Cisco Catalyst 8500-12X",
+      "os_version": "IOS-XE 17.9.4a (AirGapped)",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/0", "ip": "172.16.1.9/30", "speed_gbps": 10, "connected_to": "PE-02:GigabitEthernet0/0/2", "role": "MPLS_UPLINK" },
+        { "name": "TenGigabitEthernet0/1/0", "ip": "10.255.10.2/30", "speed_gbps": 10, "connected_to": "DC1-CE-01:TenGigabitEthernet0/1/0", "role": "DCI_HEARTBEAT" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "PE-02", "peer_ip": "172.16.1.10", "remote_asn": 64512, "type": "eBGP_Underlay" }
+      ]
+    },
+    {
+      "id": "HUB-EAST-CE-01",
+      "hostname": "hub-east-ce-01.corp.internal",
+      "role": "CE",
+      "site_id": "SITE-HUB-EAST",
+      "loopback_ip": "10.255.0.10/32",
+      "system_asn": 65002,
+      "device_model": "Juniper SRX4200",
+      "os_version": "Junos 22.4R2",
+      "interfaces": [
+        { "name": "ge-0/0/0", "ip": "172.16.2.1/30", "speed_gbps": 5, "connected_to": "PE-01:GigabitEthernet0/0/2", "role": "MPLS_UPLINK" },
+        { "name": "st0.100", "ip": "10.100.1.2/24", "speed_gbps": 2, "connected_to": "DC1-CE-01:Tunnel100", "role": "IPSEC_OVERLAY" },
+        { "name": "st0.101", "ip": "10.101.1.1/24", "speed_gbps": 1, "connected_to": "BR-NYC-CE-01:Tunnel101", "role": "IPSEC_OVERLAY" },
+        { "name": "st0.102", "ip": "10.102.1.1/24", "speed_gbps": 1, "connected_to": "BR-MIA-CE-01:Tunnel102", "role": "IPSEC_OVERLAY" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "PE-01", "peer_ip": "172.16.2.2", "remote_asn": 64512, "type": "eBGP_Underlay" },
+        { "peer_id": "DC1-CE-01", "peer_ip": "10.100.1.1", "remote_asn": 65001, "type": "eBGP_Overlay_EVPN" },
+        { "peer_id": "BR-NYC-CE-01", "peer_ip": "10.101.1.2", "remote_asn": 65101, "type": "eBGP_Overlay" },
+        { "peer_id": "BR-MIA-CE-01", "peer_ip": "10.102.1.2", "remote_asn": 65104, "type": "eBGP_Overlay" }
+      ]
+    },
+    {
+      "id": "HUB-WEST-CE-01",
+      "hostname": "hub-west-ce-01.corp.internal",
+      "role": "CE",
+      "site_id": "SITE-HUB-WEST",
+      "loopback_ip": "10.255.0.20/32",
+      "system_asn": 65003,
+      "device_model": "Juniper SRX4200",
+      "os_version": "Junos 22.4R2",
+      "interfaces": [
+        { "name": "ge-0/0/0", "ip": "172.16.3.1/30", "speed_gbps": 5, "connected_to": "PE-03:GigabitEthernet0/0/1", "role": "MPLS_UPLINK" },
+        { "name": "st0.200", "ip": "10.200.1.2/24", "speed_gbps": 2, "connected_to": "DC1-CE-01:Tunnel200", "role": "IPSEC_OVERLAY" },
+        { "name": "st0.201", "ip": "10.201.1.1/24", "speed_gbps": 1, "connected_to": "BR-CHI-CE-01:Tunnel201", "role": "IPSEC_OVERLAY" },
+        { "name": "st0.202", "ip": "10.202.1.1/24", "speed_gbps": 1, "connected_to": "BR-SFO-CE-01:Tunnel202", "role": "IPSEC_OVERLAY" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "PE-03", "peer_ip": "172.16.3.2", "remote_asn": 64512, "type": "eBGP_Underlay" },
+        { "peer_id": "DC1-CE-01", "peer_ip": "10.200.1.1", "remote_asn": 65001, "type": "eBGP_Overlay_EVPN" },
+        { "peer_id": "BR-CHI-CE-01", "peer_ip": "10.201.1.2", "remote_asn": 65102, "type": "eBGP_Overlay" },
+        { "peer_id": "BR-SFO-CE-01", "peer_ip": "10.202.1.2", "remote_asn": 65103, "type": "eBGP_Overlay" }
+      ]
+    },
+    {
+      "id": "BR-NYC-CE-01",
+      "hostname": "br-nyc-ce-01.corp.internal",
+      "role": "CE",
+      "site_id": "SITE-BR-NYC",
+      "loopback_ip": "10.255.101.1/32",
+      "system_asn": 65101,
+      "device_model": "Cisco Catalyst 8200-1N-4T",
+      "os_version": "IOS-XE 17.9.3",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/0", "ip": "172.16.4.1/30", "speed_gbps": 1, "connected_to": "PE-01:GigabitEthernet0/0/3", "role": "MPLS_UPLINK" },
+        { "name": "Tunnel101", "ip": "10.101.1.2/24", "speed_gbps": 0.5, "connected_to": "HUB-EAST-CE-01:st0.101", "role": "IPSEC_OVERLAY" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "PE-01", "peer_ip": "172.16.4.2", "remote_asn": 64512, "type": "eBGP_Underlay" },
+        { "peer_id": "HUB-EAST-CE-01", "peer_ip": "10.101.1.1", "remote_asn": 65002, "type": "eBGP_Overlay" }
+      ]
+    },
+    {
+      "id": "BR-CHI-CE-01",
+      "hostname": "br-chi-ce-01.corp.internal",
+      "role": "CE",
+      "site_id": "SITE-BR-CHI",
+      "loopback_ip": "10.255.102.1/32",
+      "system_asn": 65102,
+      "device_model": "Cisco Catalyst 8200-1N-4T",
+      "os_version": "IOS-XE 17.9.3",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/0", "ip": "172.16.5.1/30", "speed_gbps": 1, "connected_to": "PE-02:GigabitEthernet0/0/3", "role": "MPLS_UPLINK" },
+        { "name": "Tunnel201", "ip": "10.201.1.2/24", "speed_gbps": 0.5, "connected_to": "HUB-WEST-CE-01:st0.201", "role": "IPSEC_OVERLAY" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "PE-02", "peer_ip": "172.16.5.2", "remote_asn": 64512, "type": "eBGP_Underlay" },
+        { "peer_id": "HUB-WEST-CE-01", "peer_ip": "10.201.1.1", "remote_asn": 65003, "type": "eBGP_Overlay" }
+      ]
+    },
+    {
+      "id": "BR-SFO-CE-01",
+      "hostname": "br-sfo-ce-01.corp.internal",
+      "role": "CE",
+      "site_id": "SITE-BR-SFO",
+      "loopback_ip": "10.255.103.1/32",
+      "system_asn": 65103,
+      "device_model": "Cisco Catalyst 8200-1N-4T",
+      "os_version": "IOS-XE 17.9.3",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/0", "ip": "172.16.6.1/30", "speed_gbps": 1, "connected_to": "PE-03:GigabitEthernet0/0/2", "role": "MPLS_UPLINK" },
+        { "name": "Tunnel202", "ip": "10.202.1.2/24", "speed_gbps": 0.5, "connected_to": "HUB-WEST-CE-01:st0.202", "role": "IPSEC_OVERLAY" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "PE-03", "peer_ip": "172.16.6.2", "remote_asn": 64512, "type": "eBGP_Underlay" },
+        { "peer_id": "HUB-WEST-CE-01", "peer_ip": "10.202.1.1", "remote_asn": 65003, "type": "eBGP_Overlay" }
+      ]
+    },
+    {
+      "id": "BR-MIA-CE-01",
+      "hostname": "br-mia-ce-01.corp.internal",
+      "role": "CE",
+      "site_id": "SITE-BR-MIA",
+      "loopback_ip": "10.255.104.1/32",
+      "system_asn": 65104,
+      "device_model": "Cisco Catalyst 8200-1N-4T",
+      "os_version": "IOS-XE 17.9.3",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/0", "ip": "172.16.7.1/30", "speed_gbps": 1, "connected_to": "PE-04:GigabitEthernet0/0/1", "role": "MPLS_UPLINK" },
+        { "name": "Tunnel102", "ip": "10.102.1.2/24", "speed_gbps": 0.5, "connected_to": "HUB-EAST-CE-01:st0.102", "role": "IPSEC_OVERLAY" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "PE-04", "peer_ip": "172.16.7.2", "remote_asn": 64512, "type": "eBGP_Underlay" },
+        { "peer_id": "HUB-EAST-CE-01", "peer_ip": "10.102.1.1", "remote_asn": 65002, "type": "eBGP_Overlay" }
+      ]
+    },
+    {
+      "id": "PE-01",
+      "hostname": "pe-01.mpls.sp.internal",
+      "role": "PE",
+      "site_id": "SITE-SP-POP-EAST-1",
+      "loopback_ip": "10.200.0.1/32",
+      "system_asn": 64512,
+      "device_model": "Nokia 7750 SR-12e",
+      "os_version": "TiMOS 21.10.R1",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/1", "ip": "172.16.1.2/30", "speed_gbps": 10, "connected_to": "DC1-CE-01:GigabitEthernet0/0/0", "role": "ACCESS_PE_CE" },
+        { "name": "GigabitEthernet0/0/2", "ip": "172.16.2.2/30", "speed_gbps": 10, "connected_to": "HUB-EAST-CE-01:ge-0/0/0", "role": "ACCESS_PE_CE" },
+        { "name": "GigabitEthernet0/0/3", "ip": "172.16.4.2/30", "speed_gbps": 10, "connected_to": "BR-NYC-CE-01:GigabitEthernet0/0/0", "role": "ACCESS_PE_CE" },
+        { "name": "HundredGigE0/1/0", "ip": "192.168.1.1/30", "speed_gbps": 100, "connected_to": "P-CORE-01:HundredGigE0/1/0", "role": "MPLS_CORE_TRUNK" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "DC1-CE-01", "peer_ip": "172.16.1.1", "remote_asn": 65001, "type": "eBGP_VRF_Enterprise" },
+        { "peer_id": "HUB-EAST-CE-01", "peer_ip": "172.16.2.1", "remote_asn": 65002, "type": "eBGP_VRF_Enterprise" },
+        { "peer_id": "BR-NYC-CE-01", "peer_ip": "172.16.4.1", "remote_asn": 65101, "type": "eBGP_VRF_Enterprise" },
+        { "peer_id": "PE-02", "peer_ip": "10.200.0.2", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" },
+        { "peer_id": "PE-03", "peer_ip": "10.200.0.3", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" },
+        { "peer_id": "PE-04", "peer_ip": "10.200.0.4", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" }
+      ]
+    },
+    {
+      "id": "PE-02",
+      "hostname": "pe-02.mpls.sp.internal",
+      "role": "PE",
+      "site_id": "SITE-SP-POP-EAST-2",
+      "loopback_ip": "10.200.0.2/32",
+      "system_asn": 64512,
+      "device_model": "Nokia 7750 SR-12e",
+      "os_version": "TiMOS 21.10.R1",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/1", "ip": "172.16.1.6/30", "speed_gbps": 10, "connected_to": "DC1-CE-01:GigabitEthernet0/0/1", "role": "ACCESS_PE_CE" },
+        { "name": "GigabitEthernet0/0/2", "ip": "172.16.1.10/30", "speed_gbps": 10, "connected_to": "DC1-CE-02:GigabitEthernet0/0/0", "role": "ACCESS_PE_CE" },
+        { "name": "GigabitEthernet0/0/3", "ip": "172.16.5.2/30", "speed_gbps": 10, "connected_to": "BR-CHI-CE-01:GigabitEthernet0/0/0", "role": "ACCESS_PE_CE" },
+        { "name": "HundredGigE0/1/0", "ip": "192.168.1.5/30", "speed_gbps": 100, "connected_to": "P-CORE-01:HundredGigE0/1/1", "role": "MPLS_CORE_TRUNK" },
+        { "name": "HundredGigE0/1/1", "ip": "192.168.2.1/30", "speed_gbps": 100, "connected_to": "P-CORE-02:HundredGigE0/1/0", "role": "MPLS_CORE_TRUNK" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "DC1-CE-01", "peer_ip": "172.16.1.5", "remote_asn": 65001, "type": "eBGP_VRF_Enterprise" },
+        { "peer_id": "DC1-CE-02", "peer_ip": "172.16.1.9", "remote_asn": 65001, "type": "eBGP_VRF_Enterprise" },
+        { "peer_id": "BR-CHI-CE-01", "peer_ip": "172.16.5.1", "remote_asn": 65102, "type": "eBGP_VRF_Enterprise" },
+        { "peer_id": "PE-01", "peer_ip": "10.200.0.1", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" },
+        { "peer_id": "PE-03", "peer_ip": "10.200.0.3", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" },
+        { "peer_id": "PE-04", "peer_ip": "10.200.0.4", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" }
+      ]
+    },
+    {
+      "id": "PE-03",
+      "hostname": "pe-03.mpls.sp.internal",
+      "role": "PE",
+      "site_id": "SITE-SP-POP-WEST-1",
+      "loopback_ip": "10.200.0.3/32",
+      "system_asn": 64512,
+      "device_model": "Nokia 7750 SR-12e",
+      "os_version": "TiMOS 21.10.R1",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/1", "ip": "172.16.3.2/30", "speed_gbps": 10, "connected_to": "HUB-WEST-CE-01:ge-0/0/0", "role": "ACCESS_PE_CE" },
+        { "name": "GigabitEthernet0/0/2", "ip": "172.16.6.2/30", "speed_gbps": 10, "connected_to": "BR-SFO-CE-01:GigabitEthernet0/0/0", "role": "ACCESS_PE_CE" },
+        { "name": "HundredGigE0/1/0", "ip": "192.168.2.5/30", "speed_gbps": 100, "connected_to": "P-CORE-02:HundredGigE0/1/1", "role": "MPLS_CORE_TRUNK" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "HUB-WEST-CE-01", "peer_ip": "172.16.3.1", "remote_asn": 65003, "type": "eBGP_VRF_Enterprise" },
+        { "peer_id": "BR-SFO-CE-01", "peer_ip": "172.16.6.1", "remote_asn": 65103, "type": "eBGP_VRF_Enterprise" },
+        { "peer_id": "PE-01", "peer_ip": "10.200.0.1", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" },
+        { "peer_id": "PE-02", "peer_ip": "10.200.0.2", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" },
+        { "peer_id": "PE-04", "peer_ip": "10.200.0.4", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" }
+      ]
+    },
+    {
+      "id": "PE-04",
+      "hostname": "pe-04.mpls.sp.internal",
+      "role": "PE",
+      "site_id": "SITE-SP-POP-SOUTH-1",
+      "loopback_ip": "10.200.0.4/32",
+      "system_asn": 64512,
+      "device_model": "Nokia 7750 SR-12e",
+      "os_version": "TiMOS 21.10.R1",
+      "interfaces": [
+        { "name": "GigabitEthernet0/0/1", "ip": "172.16.7.2/30", "speed_gbps": 10, "connected_to": "BR-MIA-CE-01:GigabitEthernet0/0/0", "role": "ACCESS_PE_CE" },
+        { "name": "HundredGigE0/1/0", "ip": "192.168.1.9/30", "speed_gbps": 100, "connected_to": "P-CORE-01:HundredGigE0/1/2", "role": "MPLS_CORE_TRUNK" },
+        { "name": "HundredGigE0/1/1", "ip": "192.168.2.9/30", "speed_gbps": 100, "connected_to": "P-CORE-02:HundredGigE0/1/2", "role": "MPLS_CORE_TRUNK" }
+      ],
+      "bgp_peers": [
+        { "peer_id": "BR-MIA-CE-01", "peer_ip": "172.16.7.1", "remote_asn": 65104, "type": "eBGP_VRF_Enterprise" },
+        { "peer_id": "PE-01", "peer_ip": "10.200.0.1", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" },
+        { "peer_id": "PE-02", "peer_ip": "10.200.0.2", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" },
+        { "peer_id": "PE-03", "peer_ip": "10.200.0.3", "remote_asn": 64512, "type": "iBGP_MP_BGP_EVPN" }
+      ]
+    },
+    {
+      "id": "P-CORE-01",
+      "hostname": "p-core-01.mpls.sp.internal",
+      "role": "P",
+      "site_id": "SITE-SP-CORE-EAST",
+      "loopback_ip": "10.200.254.1/32",
+      "system_asn": 64512,
+      "device_model": "Cisco 8808 Core Router",
+      "os_version": "IOS-XR 7.8.2",
+      "interfaces": [
+        { "name": "HundredGigE0/1/0", "ip": "192.168.1.2/30", "speed_gbps": 100, "connected_to": "PE-01:HundredGigE0/1/0", "role": "MPLS_LSR" },
+        { "name": "HundredGigE0/1/1", "ip": "192.168.1.6/30", "speed_gbps": 100, "connected_to": "PE-02:HundredGigE0/1/0", "role": "MPLS_LSR" },
+        { "name": "HundredGigE0/1/2", "ip": "192.168.1.10/30", "speed_gbps": 100, "connected_to": "PE-04:HundredGigE0/1/0", "role": "MPLS_LSR" },
+        { "name": "FourHundredGigE0/2/0", "ip": "192.168.0.1/30", "speed_gbps": 400, "connected_to": "P-CORE-02:FourHundredGigE0/2/0", "role": "CORE_INTERCONNECT" }
+      ],
+      "bgp_peers": []
+    },
+    {
+      "id": "P-CORE-02",
+      "hostname": "p-core-02.mpls.sp.internal",
+      "role": "P",
+      "site_id": "SITE-SP-CORE-WEST",
+      "loopback_ip": "10.200.254.2/32",
+      "system_asn": 64512,
+      "device_model": "Cisco 8808 Core Router",
+      "os_version": "IOS-XR 7.8.2",
+      "interfaces": [
+        { "name": "HundredGigE0/1/0", "ip": "192.168.2.2/30", "speed_gbps": 100, "connected_to": "PE-02:HundredGigE0/1/1", "role": "MPLS_LSR" },
+        { "name": "HundredGigE0/1/1", "ip": "192.168.2.6/30", "speed_gbps": 100, "connected_to": "PE-03:HundredGigE0/1/0", "role": "MPLS_LSR" },
+        { "name": "HundredGigE0/1/2", "ip": "192.168.2.10/30", "speed_gbps": 100, "connected_to": "PE-04:HundredGigE0/1/1", "role": "MPLS_LSR" },
+        { "name": "FourHundredGigE0/2/0", "ip": "192.168.0.2/30", "speed_gbps": 400, "connected_to": "P-CORE-01:FourHundredGigE0/2/0", "role": "CORE_INTERCONNECT" }
+      ],
+      "bgp_peers": []
+    }
+  ],
+  "links": [
+    {
+      "id": "LINK-UND-01",
+      "name": "DC1-CE-01 <-> PE-01 Primary Underlay",
+      "layer": "UNDERLAY",
+      "source": "DC1-CE-01",
+      "target": "PE-01",
+      "source_interface": "GigabitEthernet0/0/0",
+      "target_interface": "GigabitEthernet0/0/1",
+      "capacity_mbps": 10000,
+      "sla_latency_threshold_ms": 15.0,
+      "sla_jitter_threshold_ms": 3.0,
+      "sla_loss_threshold_pct": 0.05,
+      "media": "Direct 10G Metro-E",
+      "cost": 10
+    },
+    {
+      "id": "LINK-UND-02",
+      "name": "DC1-CE-01 <-> PE-02 Secondary Underlay",
+      "layer": "UNDERLAY",
+      "source": "DC1-CE-01",
+      "target": "PE-02",
+      "source_interface": "GigabitEthernet0/0/1",
+      "target_interface": "GigabitEthernet0/0/1",
+      "capacity_mbps": 10000,
+      "sla_latency_threshold_ms": 18.0,
+      "sla_jitter_threshold_ms": 4.0,
+      "sla_loss_threshold_pct": 0.05,
+      "media": "Direct 10G Metro-E",
+      "cost": 15
+    },
+    {
+      "id": "LINK-UND-03",
+      "name": "DC1-CE-02 <-> PE-02 Primary Underlay",
+      "layer": "UNDERLAY",
+      "source": "DC1-CE-02",
+      "target": "PE-02",
+      "source_interface": "GigabitEthernet0/0/0",
+      "target_interface": "GigabitEthernet0/0/2",
+      "capacity_mbps": 10000,
+      "sla_latency_threshold_ms": 15.0,
+      "sla_jitter_threshold_ms": 3.0,
+      "sla_loss_threshold_pct": 0.05,
+      "media": "Direct 10G Metro-E",
+      "cost": 10
+    },
+    {
+      "id": "LINK-UND-04",
+      "name": "HUB-EAST-CE-01 <-> PE-01 Underlay",
+      "layer": "UNDERLAY",
+      "source": "HUB-EAST-CE-01",
+      "target": "PE-01",
+      "source_interface": "ge-0/0/0",
+      "target_interface": "GigabitEthernet0/0/2",
+      "capacity_mbps": 5000,
+      "sla_latency_threshold_ms": 20.0,
+      "sla_jitter_threshold_ms": 5.0,
+      "sla_loss_threshold_pct": 0.1,
+      "media": "5G Metro-E Carrier Uplink",
+      "cost": 20
+    },
+    {
+      "id": "LINK-UND-05",
+      "name": "HUB-WEST-CE-01 <-> PE-03 Underlay",
+      "layer": "UNDERLAY",
+      "source": "HUB-WEST-CE-01",
+      "target": "PE-03",
+      "source_interface": "ge-0/0/0",
+      "target_interface": "GigabitEthernet0/0/1",
+      "capacity_mbps": 5000,
+      "sla_latency_threshold_ms": 25.0,
+      "sla_jitter_threshold_ms": 5.0,
+      "sla_loss_threshold_pct": 0.1,
+      "media": "5G Metro-E Carrier Uplink",
+      "cost": 20
+    },
+    {
+      "id": "LINK-UND-06",
+      "name": "BR-NYC-CE-01 <-> PE-01 Underlay",
+      "layer": "UNDERLAY",
+      "source": "BR-NYC-CE-01",
+      "target": "PE-01",
+      "source_interface": "GigabitEthernet0/0/0",
+      "target_interface": "GigabitEthernet0/0/3",
+      "capacity_mbps": 1000,
+      "sla_latency_threshold_ms": 22.0,
+      "sla_jitter_threshold_ms": 6.0,
+      "sla_loss_threshold_pct": 0.2,
+      "media": "1G DIA / MPLS Loop",
+      "cost": 30
+    },
+    {
+      "id": "LINK-UND-07",
+      "name": "BR-CHI-CE-01 <-> PE-02 Underlay",
+      "layer": "UNDERLAY",
+      "source": "BR-CHI-CE-01",
+      "target": "PE-02",
+      "source_interface": "GigabitEthernet0/0/0",
+      "target_interface": "GigabitEthernet0/0/3",
+      "capacity_mbps": 1000,
+      "sla_latency_threshold_ms": 28.0,
+      "sla_jitter_threshold_ms": 6.0,
+      "sla_loss_threshold_pct": 0.2,
+      "media": "1G DIA / MPLS Loop",
+      "cost": 30
+    },
+    {
+      "id": "LINK-UND-08",
+      "name": "BR-SFO-CE-01 <-> PE-03 Underlay",
+      "layer": "UNDERLAY",
+      "source": "BR-SFO-CE-01",
+      "target": "PE-03",
+      "source_interface": "GigabitEthernet0/0/0",
+      "target_interface": "GigabitEthernet0/0/2",
+      "capacity_mbps": 1000,
+      "sla_latency_threshold_ms": 32.0,
+      "sla_jitter_threshold_ms": 7.0,
+      "sla_loss_threshold_pct": 0.2,
+      "media": "1G DIA / MPLS Loop",
+      "cost": 30
+    },
+    {
+      "id": "LINK-UND-09",
+      "name": "BR-MIA-CE-01 <-> PE-04 Underlay",
+      "layer": "UNDERLAY",
+      "source": "BR-MIA-CE-01",
+      "target": "PE-04",
+      "source_interface": "GigabitEthernet0/0/0",
+      "target_interface": "GigabitEthernet0/0/1",
+      "capacity_mbps": 1000,
+      "sla_latency_threshold_ms": 30.0,
+      "sla_jitter_threshold_ms": 6.0,
+      "sla_loss_threshold_pct": 0.2,
+      "media": "1G DIA / MPLS Loop",
+      "cost": 30
+    },
+    {
+      "id": "LINK-CORE-01",
+      "name": "PE-01 <-> P-CORE-01 Core Trunk",
+      "layer": "UNDERLAY",
+      "source": "PE-01",
+      "target": "P-CORE-01",
+      "source_interface": "HundredGigE0/1/0",
+      "target_interface": "HundredGigE0/1/0",
+      "capacity_mbps": 100000,
+      "sla_latency_threshold_ms": 8.0,
+      "sla_jitter_threshold_ms": 1.0,
+      "sla_loss_threshold_pct": 0.01,
+      "media": "100G Dark Fiber DWDM",
+      "cost": 5
+    },
+    {
+      "id": "LINK-CORE-02",
+      "name": "PE-02 <-> P-CORE-01 Core Trunk",
+      "layer": "UNDERLAY",
+      "source": "PE-02",
+      "target": "P-CORE-01",
+      "source_interface": "HundredGigE0/1/0",
+      "target_interface": "HundredGigE0/1/1",
+      "capacity_mbps": 100000,
+      "sla_latency_threshold_ms": 8.0,
+      "sla_jitter_threshold_ms": 1.0,
+      "sla_loss_threshold_pct": 0.01,
+      "media": "100G Dark Fiber DWDM",
+      "cost": 5
+    },
+    {
+      "id": "LINK-CORE-03",
+      "name": "PE-02 <-> P-CORE-02 Core Trunk",
+      "layer": "UNDERLAY",
+      "source": "PE-02",
+      "target": "P-CORE-02",
+      "source_interface": "HundredGigE0/1/1",
+      "target_interface": "HundredGigE0/1/0",
+      "capacity_mbps": 100000,
+      "sla_latency_threshold_ms": 12.0,
+      "sla_jitter_threshold_ms": 1.5,
+      "sla_loss_threshold_pct": 0.01,
+      "media": "100G Dark Fiber DWDM",
+      "cost": 8
+    },
+    {
+      "id": "LINK-CORE-04",
+      "name": "PE-03 <-> P-CORE-02 Core Trunk",
+      "layer": "UNDERLAY",
+      "source": "PE-03",
+      "target": "P-CORE-02",
+      "source_interface": "HundredGigE0/1/0",
+      "target_interface": "HundredGigE0/1/1",
+      "capacity_mbps": 100000,
+      "sla_latency_threshold_ms": 8.0,
+      "sla_jitter_threshold_ms": 1.0,
+      "sla_loss_threshold_pct": 0.01,
+      "media": "100G Dark Fiber DWDM",
+      "cost": 5
+    },
+    {
+      "id": "LINK-CORE-05",
+      "name": "PE-04 <-> P-CORE-01 Core Trunk",
+      "layer": "UNDERLAY",
+      "source": "PE-04",
+      "target": "P-CORE-01",
+      "source_interface": "HundredGigE0/1/0",
+      "target_interface": "HundredGigE0/1/2",
+      "capacity_mbps": 100000,
+      "sla_latency_threshold_ms": 10.0,
+      "sla_jitter_threshold_ms": 1.5,
+      "sla_loss_threshold_pct": 0.01,
+      "media": "100G Dark Fiber DWDM",
+      "cost": 6
+    },
+    {
+      "id": "LINK-CORE-06",
+      "name": "PE-04 <-> P-CORE-02 Core Trunk",
+      "layer": "UNDERLAY",
+      "source": "PE-04",
+      "target": "P-CORE-02",
+      "source_interface": "HundredGigE0/1/1",
+      "target_interface": "HundredGigE0/1/2",
+      "capacity_mbps": 100000,
+      "sla_latency_threshold_ms": 14.0,
+      "sla_jitter_threshold_ms": 2.0,
+      "sla_loss_threshold_pct": 0.01,
+      "media": "100G Dark Fiber DWDM",
+      "cost": 8
+    },
+    {
+      "id": "LINK-CORE-07",
+      "name": "P-CORE-01 <-> P-CORE-02 Inter-Core Backbone",
+      "layer": "UNDERLAY",
+      "source": "P-CORE-01",
+      "target": "P-CORE-02",
+      "source_interface": "FourHundredGigE0/2/0",
+      "target_interface": "FourHundredGigE0/2/0",
+      "capacity_mbps": 400000,
+      "sla_latency_threshold_ms": 18.0,
+      "sla_jitter_threshold_ms": 1.0,
+      "sla_loss_threshold_pct": 0.001,
+      "media": "400G Trans-Continental Terrestrial",
+      "cost": 15
+    },
+    {
+      "id": "LINK-DCI-01",
+      "name": "DC1-CE-01 <-> DC1-CE-02 DCI Cross-Connect",
+      "layer": "UNDERLAY",
+      "source": "DC1-CE-01",
+      "target": "DC1-CE-02",
+      "source_interface": "TenGigabitEthernet0/1/0",
+      "target_interface": "TenGigabitEthernet0/1/0",
+      "capacity_mbps": 10000,
+      "sla_latency_threshold_ms": 1.0,
+      "sla_jitter_threshold_ms": 0.2,
+      "sla_loss_threshold_pct": 0.001,
+      "media": "Dark Fiber Intra-DC",
+      "cost": 1
+    },
+    {
+      "id": "LINK-OVL-01",
+      "name": "DC1-CE-01 <-> HUB-EAST-CE-01 Primary SD-WAN IPSec Tunnel",
+      "layer": "OVERLAY",
+      "source": "DC1-CE-01",
+      "target": "HUB-EAST-CE-01",
+      "source_interface": "Tunnel100",
+      "target_interface": "st0.100",
+      "encryption": "AES-256-GCM / SHA-384 / DH-Group 19",
+      "capacity_mbps": 5000,
+      "sla_latency_threshold_ms": 35.0,
+      "sla_jitter_threshold_ms": 5.0,
+      "sla_loss_threshold_pct": 0.1,
+      "underlay_path": ["DC1-CE-01", "PE-01", "HUB-EAST-CE-01"]
+    },
+    {
+      "id": "LINK-OVL-02",
+      "name": "DC1-CE-01 <-> HUB-WEST-CE-01 Primary SD-WAN IPSec Tunnel",
+      "layer": "OVERLAY",
+      "source": "DC1-CE-01",
+      "target": "HUB-WEST-CE-01",
+      "source_interface": "Tunnel200",
+      "target_interface": "st0.200",
+      "encryption": "AES-256-GCM / SHA-384 / DH-Group 19",
+      "capacity_mbps": 5000,
+      "sla_latency_threshold_ms": 48.0,
+      "sla_jitter_threshold_ms": 6.0,
+      "sla_loss_threshold_pct": 0.1,
+      "underlay_path": ["DC1-CE-01", "PE-01", "P-CORE-01", "P-CORE-02", "PE-03", "HUB-WEST-CE-01"]
+    },
+    {
+      "id": "LINK-OVL-03",
+      "name": "HUB-EAST-CE-01 <-> BR-NYC-CE-01 Branch Overlay",
+      "layer": "OVERLAY",
+      "source": "HUB-EAST-CE-01",
+      "target": "BR-NYC-CE-01",
+      "source_interface": "st0.101",
+      "target_interface": "Tunnel101",
+      "encryption": "AES-256-GCM / SHA-384 / DH-Group 19",
+      "capacity_mbps": 1000,
+      "sla_latency_threshold_ms": 28.0,
+      "sla_jitter_threshold_ms": 4.0,
+      "sla_loss_threshold_pct": 0.15,
+      "underlay_path": ["HUB-EAST-CE-01", "PE-01", "BR-NYC-CE-01"]
+    },
+    {
+      "id": "LINK-OVL-04",
+      "name": "HUB-EAST-CE-01 <-> BR-MIA-CE-01 Branch Overlay",
+      "layer": "OVERLAY",
+      "source": "HUB-EAST-CE-01",
+      "target": "BR-MIA-CE-01",
+      "source_interface": "st0.102",
+      "target_interface": "Tunnel102",
+      "encryption": "AES-256-GCM / SHA-384 / DH-Group 19",
+      "capacity_mbps": 1000,
+      "sla_latency_threshold_ms": 32.0,
+      "sla_jitter_threshold_ms": 5.0,
+      "sla_loss_threshold_pct": 0.15,
+      "underlay_path": ["HUB-EAST-CE-01", "PE-01", "P-CORE-01", "PE-04", "BR-MIA-CE-01"]
+    },
+    {
+      "id": "LINK-OVL-05",
+      "name": "HUB-WEST-CE-01 <-> BR-CHI-CE-01 Branch Overlay",
+      "layer": "OVERLAY",
+      "source": "HUB-WEST-CE-01",
+      "target": "BR-CHI-CE-01",
+      "source_interface": "st0.201",
+      "target_interface": "Tunnel201",
+      "encryption": "AES-256-GCM / SHA-384 / DH-Group 19",
+      "capacity_mbps": 1000,
+      "sla_latency_threshold_ms": 34.0,
+      "sla_jitter_threshold_ms": 5.0,
+      "sla_loss_threshold_pct": 0.15,
+      "underlay_path": ["HUB-WEST-CE-01", "PE-03", "P-CORE-02", "PE-02", "BR-CHI-CE-01"]
+    },
+    {
+      "id": "LINK-OVL-06",
+      "name": "HUB-WEST-CE-01 <-> BR-SFO-CE-01 Branch Overlay",
+      "layer": "OVERLAY",
+      "source": "HUB-WEST-CE-01",
+      "target": "BR-SFO-CE-01",
+      "source_interface": "st0.202",
+      "target_interface": "Tunnel202",
+      "encryption": "AES-256-GCM / SHA-384 / DH-Group 19",
+      "capacity_mbps": 1000,
+      "sla_latency_threshold_ms": 25.0,
+      "sla_jitter_threshold_ms": 4.0,
+      "sla_loss_threshold_pct": 0.15,
+      "underlay_path": ["HUB-WEST-CE-01", "PE-03", "BR-SFO-CE-01"]
+    }
+  ]
+}
